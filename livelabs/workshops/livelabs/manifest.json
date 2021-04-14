@@ -1,0 +1,32 @@
+{
+    "workshoptitle": "Getting started with Oracle Property Graph on Docker",
+    "help": "livelabs-help-db_us@oracle.com",
+	"tutorials": [
+        {
+            "title": "Getting Started",
+            "description": "Prerequisites",
+            "filename": "https://raw.githubusercontent.com/oracle/learning-library/master/common/labs/cloud-login/cloud-login-livelabs2.md"
+        },
+        {
+            "title": "Introduction",
+            "description": "Introduction",
+            "filename":"../../intro.md"
+        },
+        {
+            "title": "Lab 1: Setup Graph Server in Docker",
+            "description":"Setup environment with Docker",
+            "filename":"../../setup-graph-in-docker/setup-graph-in-docker.md"
+        },
+        {
+            "title": "Lab 2: Setup Oracle Database in Docker",
+            "description":"Build and start an Oracle Database container in Docker",
+            "filename":"../../setup-database-in-docker/setup-database-in-docker.md"
+        },
+        {
+            "title": "Need Help?",
+            "description": "Solutions to Common Problems and Directions for Receiving Live Help",
+            "filename":"https://raw.githubusercontent.com/oracle/learning-library/master/common/labs/need-help/need-help-livelabs.md"
+        }
+    ]
+}
+
