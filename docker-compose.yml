@@ -1,0 +1,13 @@
+version: '3'
+services:
+  graph-server:
+    build:
+      context: .
+      args:
+        - VERSION_GSC=21.1.0
+        - VERSION_JDK=11.0.10
+    image: graph-server:21.1.0
+    ports:
+      - "7007:7007"
+    volumes:
+      - ./graphs:/graphs
