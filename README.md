@@ -34,7 +34,7 @@ Build docker image (needs 4GB memory).
 Launch Oracle Database on a docker container.
 
     $ docker run --name database \
-      -p 1522:1521 -e ORACLE_PWD=Welcome1 \
+      -p 1521:1521 -e ORACLE_PWD=Welcome1 \
       -v $HOME:/host-home \
       oracle/database:18.4.0-xe
 
@@ -85,6 +85,82 @@ Enable the graph feature.
     SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/opgremov.sql
     SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/catopg.sql
     SQL> exit
+
+## Create a User
+
+Connect to the database container.
+
+    $ docker exec -it database sqlplus sys/Welcome1@xepdb1 as sysdba
+
+Create a database user `graphuser` and grant necessary privileges.
+
+```sql
+CREATE USER graphuser
+IDENTIFIED BY Welcome1
+DEFAULT TABLESPACE users
+TEMPORARY TABLESPACE temp
+QUOTA UNLIMITED ON users;
+
+GRANT
+  alter session 
+, create procedure 
+, create sequence 
+, create session 
+, create table 
+, create trigger 
+, create type 
+, create view 
+TO graphuser;
+```
+
+Exit and try connecting as the new user.
+
+    SQL> exit
+    $ docker exec -it database sqlplus graphuser/Welcome1@xepdb1
+
+## Create a Graph 
+
+You need SQLcl + PGQL plugin to run PGQL queries. (SQL*Plus does not support PGQL.)
+
+[This](https://github.com/ryotayamanaka/sqlcl-pgql) is the instruction to run SQLcl on a Docker container.
+
+Once it is installed, connect to the database.
+
+    $ sql graphuser/Welcome1@host.docker.internal:1521/xepdb1
+
+Check if you can enable the PGQL mode.
+
+    $ pgql auto on
+
+Run some PGQL queries.
+
+```sql
+CREATE PROPERTY GRAPH graph1;
+
+INSERT INTO graph1 VERTEX v
+LABELS (PERSON) PROPERTIES (v.id = 'p1', v.NAME = 'Alice');
+
+INSERT INTO graph1 VERTEX v
+LABELS (CAR) PROPERTIES (v.id = 'd1', v.BRAND = 'Toyota');
+
+INSERT INTO graph1 EDGE e BETWEEN src AND dst
+LABELS (HAS) PROPERTIES (e.SINCE = 2017)
+FROM MATCH ( (src), (dst) ) ON graph1
+WHERE src.id = 'p1' AND dst.id = 'd1';
+
+COMMIT;
+
+SELECT c.BRAND, h.SINCE
+FROM MATCH (p)-[h:HAS]->(c) ON graph1
+WHERE p.NAME = 'Alice';
+
+DELETE v
+FROM MATCH (v) ON graph1;
+
+COMMIT;
+
+DROP PROPERTY GRAPH graph1;
+```
 
 # Setup Graph Server
 
