@@ -17,47 +17,45 @@ Oracle Database is required before setting up Graph Server because its authentic
 
 If you have an environment running Oracle Database (>= 12.2), the new Graph Server container can integrate with it. Please go to the next step to configure the database.
 
-## Option 2. Use Container Registry image (19c EE)
-
-## Option 3. Build image by yourself (18c XE)
+## Option 2. Build image by yourself (18c XE)
 
 Clone `docker-images` repository.
 
-    $ cd <your-work-directory>
+    $ cd ~/
+    $ mkdir oracle
+    $ cd oracle
     $ git clone https://github.com/oracle/docker-images.git
 
-Download Oracle Database.
+Build docker image (needs 4GB memory).
 
-* [Oracle Database 19.3.0 for Linux x86-64 (ZIP)](https://www.oracle.com/database/technologies/oracle-database-software-downloads.html)
+    $ cd docker-images/OracleDatabase/SingleInstance/dockerfiles/18.4.0/
+    $ docker build -t oracle/database:18.4.0-xe -f Dockerfile.xe .
 
-Put `LINUX.X64_193000_db_home.zip` under:
-* `docker-images/OracleDatabase/SingleInstance/dockerfiles/19.3.0/`
+Launch Oracle Database on a docker container.
 
-Build the image.
+    $ docker run --name database \
+      -p 1522:1521 -e ORACLE_PWD=Welcome1 \
+      -v $HOME:/host-home \
+      oracle/database:18.4.0-xe
 
-    $ cd docker-images/OracleDatabase/SingleInstance/dockerfiles/
-    $ bash buildDockerImage.sh -v 19.3.0 -e
+Once you got the message below, the database is ready.
 
-Start the container. This step takes time for the first time.
+    #########################
+    DATABASE IS READY TO USE!
+    #########################
 
-    $ cd oracle-pg/
-    $ docker-compose up database
-    ...
-    database_1      | Completing Database Creation
-    ...
-    database_1      | #########################
-    database_1      | DATABASE IS READY TO USE!
-    database_1      | #########################
+Open another console and try connecting with SQL*Plus.
 
-You need to start the container if it is stopped.
+    $ docker exec -it database sqlplus sys/Welcome1@xepdb1 as sysdba
 
+You will get this error when the database is not ready yet.
+
+    ORA-12514: TNS:listener does not currently know of service requested in connect descriptor
+
+You can stop the container (or quit with Ctl+C) and restart it.
+
+    $ docker stop database
     $ docker start database
-
-You will get this error when you try to connect before the database is created.
-
-    $ docker exec -it database sqlplus sys/Welcome1@localhost:1521/orclpdb1 as sysdba
-    ...
-    ORA-12514: TNS:listener does not currently know of service requested in connect
 
 To check the progress, see logs.
 
@@ -69,28 +67,30 @@ You need to apply the PL/SQL patch to the database.
 
 Go to the following pages and download the packages.
 
-* [Oracle Graph Server and Client 21.1](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
+* [Oracle Graph Server and Client](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
 
-- oracle-graph-plsql-21.1.0.zip
+- oracle-graph-plsql-21.3.0.zip
+
+Unzip the content under `oracle/oracle-graph-plsql/`.
+
+    $ cd ~/oracle/
+    $ unzip oracle-graph-plsql-21.3.0.zip -d oracle-graph-plsql
 
 Connect to the database container.
 
-```
-$ docker exec -it database sqlplus sys/WELcome123##@orclpdb1 as sysdba
-```
+    $ docker exec -it database sqlplus sys/Welcome1@xepdb1 as sysdba
 
-Configure Property Graph features. This script was extracted from oracle-graph-plsql-xx.x.x.zip.
+Enable the graph feature.
 
-```
-SQL> @/home/oracle/scripts/oracle-graph-plsql/19c_and_above/opgremov.sql
-SQL> @/home/oracle/scripts/oracle-graph-plsql/19c_and_above/catopg.sql
-```
+    SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/opgremov.sql
+    SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/catopg.sql
+    SQL> exit
 
 # Setup Graph Server
 
 ## Clone this Git Repository
 
-    $ cd <your-work-directory>
+    $ cd ~/oracle/
     $ git clone https://github.com/ryotayamanaka/setup_pg_docker.git
 
 ## Download and Extract Packages for Graph Server and Client
