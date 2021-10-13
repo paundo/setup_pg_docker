@@ -80,7 +80,7 @@ Connect to the database container.
 
     $ docker exec -it database sqlplus sys/Welcome1@xepdb1 as sysdba
 
-Enable the graph feature.
+Enable the graph feature. Please note `$HOME` of the host is mounted to `/host-home` in the container.
 
     SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/opgremov.sql
     SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/catopg.sql
