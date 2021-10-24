@@ -8,7 +8,7 @@ RUN yum install -y unzip numactl vim python3 openssl \
  && rm -rf /var/cache/yum/* \
  && rpm -ivh /tmp/jdk-${VERSION_JDK}_linux-x64_bin.rpm \
  && rpm -ivh /tmp/oracle-graph-${VERSION_GSC}.x86_64.rpm
-ENV JAVA_HOME=/usr/java/jdk-11.0.10
+ENV JAVA_HOME=/usr/java/jdk-${VERSION_JDK}
 ENV PATH=$PATH:/opt/oracle/graph/bin
 ENV SSL_CERT_FILE=/etc/oracle/graph/ca_certificate.pem
 RUN keytool -import -trustcacerts \

@@ -1,3 +1,5 @@
+*Note: The scripts here are my own, not Oracle product.*
+
 # Setup Graph Server using Docker
 
 The docker image build files, sample datasets, and use case exmaples, for Oracle Property Graph.
@@ -6,7 +8,7 @@ Architecture:
 
 ![](https://user-images.githubusercontent.com/4862919/80330080-632e9a00-886e-11ea-822e-0a96e40dbbf9.jpg)
 
-Oracle Database is required before setting up Graph Server because its authentication is based on the database users. For standalone usage, please see [Standalone mode](#Standalone_mode) section.
+Oracle Database is required before setting up Graph Server because its authentication is based on the database users.
 
 - [Setup Database](#Setup_Database)
 - [Setup Graph Server](#Setup_Graph_Server)
@@ -17,7 +19,9 @@ Oracle Database is required before setting up Graph Server because its authentic
 
 If you have an environment running Oracle Database (>= 12.2), the new Graph Server container can integrate with it. Please go to the next step to configure the database.
 
-## Option 2. Build image by yourself (18c XE)
+## Option 2. Create a database container
+
+Oracle Database [Express Edition (XE)](https://www.oracle.com/database/technologies/appdev/xe.html) is freely available, and we can get the scripts to build Docker image for XE 18c from the official GitHub repository.
 
 Clone `docker-images` repository.
 
@@ -26,7 +30,7 @@ Clone `docker-images` repository.
     $ cd oracle
     $ git clone https://github.com/oracle/docker-images.git
 
-Build docker image (needs 4GB memory).
+Build docker image. This step requires about 4GB memory.
 
     $ cd docker-images/OracleDatabase/SingleInstance/dockerfiles/18.4.0/
     $ docker build -t oracle/database:18.4.0-xe -f Dockerfile.xe .
@@ -65,16 +69,14 @@ To check the progress, see logs.
 
 You need to apply the PL/SQL patch to the database.
 
-Go to the following pages and download the packages.
+Go to the [Oracle Graph Server and Client](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html) page and download the PL/SQL package.
 
-* [Oracle Graph Server and Client](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
-
-- oracle-graph-plsql-21.3.0.zip
+- oracle-graph-plsql-21.4.0.zip
 
 Unzip the content under `oracle/oracle-graph-plsql/`.
 
     $ cd ~/oracle/
-    $ unzip oracle-graph-plsql-21.3.0.zip -d oracle-graph-plsql
+    $ unzip oracle-graph-plsql-21.4.0.zip -d oracle-graph-plsql
 
 Connect to the database container.
 
@@ -82,8 +84,8 @@ Connect to the database container.
 
 Enable the graph feature. Please note `$HOME` of the host is mounted to `/host-home` in the container.
 
-    SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/opgremov.sql
-    SQL> @/host-home/oracle/oracle-graph-plsql/18c_and_below/catopg.sql
+    SQL> @/host-home/oracle-graph/oracle-graph-plsql/18c_and_below/opgremov.sql
+    SQL> @/host-home/oracle-graph/oracle-graph-plsql/18c_and_below/catopg.sql
     SQL> exit
 
 ## Create a User
@@ -109,7 +111,8 @@ GRANT
 , create table 
 , create trigger 
 , create type 
-, create view 
+, create view
+, graph_developer -- This role is required for using Graph Server
 TO graphuser;
 ```
 
@@ -127,10 +130,12 @@ You need SQLcl + PGQL plugin to run PGQL queries. (SQL*Plus does not support PGQ
 Once it is installed, connect to the database.
 
     $ sql graphuser/Welcome1@host.docker.internal:1521/xepdb1
+    SQL>
 
 Check if you can enable the PGQL mode.
 
     $ pgql auto on
+    PGQL>
 
 Run some PGQL queries.
 
@@ -162,6 +167,10 @@ COMMIT;
 DROP PROPERTY GRAPH graph1;
 ```
 
+Exit from SQLcl.
+
+    PGQL> exit
+
 # Setup Graph Server
 
 ## Clone this Git Repository
@@ -173,13 +182,12 @@ DROP PROPERTY GRAPH graph1;
 
 Go to the following pages and download the packages.
 
-* [Oracle Graph Server and Client 21.1](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
+* [Oracle Graph Server and Client 21.4](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
 * [Oracle JDK 11](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html) (No cost for personal use and development use)
 
 Put the following files under `packages/` directory.
  
-- oracle-graph-21.1.0.x86_64.rpm
-- oracle-graph-client-21.1.0.zip
+- oracle-graph-21.4.0.x86_64.rpm
 - jdk-11.0.10_linux-x64_bin.rpm
 
 ## Start Container
@@ -188,7 +196,7 @@ Build the image.
 
 ```
 docker build . \
---tag graph-server:21.1.0 \
+--tag graph-server:<version of Graph Server and Client> \
 --build-arg VERSION_GSC=<version of Graph Server and Client> \
 --build-arg VERSION_JDK=<version of JDK>
 ```
@@ -197,8 +205,8 @@ Example:
 
 ```
 docker build . \
---tag graph-server:21.1.0 \
---build-arg VERSION_GSC=21.1.0 \
+--tag graph-server:21.4.0 \
+--build-arg VERSION_GSC=21.4.0 \
 --build-arg VERSION_JDK=11.0.10
 ```
 
@@ -208,9 +216,8 @@ Start a container.
 docker run \
 --name <container name> \
 --publish <host port>:7007 \
---volume $PWD/data:/opt/oracle/graph/data \
 --volume $PWD/pgx.conf:/etc/oracle/graph/pgx.conf \
-graph-server:21.1.0
+graph-server:21.4.0
 ```
 
 Example:
@@ -219,9 +226,8 @@ Example:
 docker run \
 --name graph-server \
 --publish 7007:7007 \
---volume $PWD/data:/opt/oracle/graph/data \
 --volume $PWD/pgx.conf:/etc/oracle/graph/pgx.conf \
-graph-server:21.1.0
+graph-server:21.4.0
 ```
 
 ## Connect to Graph Server
@@ -230,30 +236,6 @@ graph-server:21.1.0
 docker exec -it graph-server /bin/bash
 ```
 
-Access Graph Visualization using **FireFox**.
+Access Graph Visualization using web browser.
 
-* Graph Visualization - https://localhost:7007/ui/ (User: graph_dev, Password: WELcome123##)
-
-
-
-
-
-# Appendix: Setup Jupyter
-
-* Jupyter - http://localhost:8888/
-
-To stop, restart, or remove the containers, see [Appendix 2](#appendix-2).
-
-
-`Cnt+C` to quit.
-
-## Appendix 2
-
-To start, stop, or restart the containers.
-
-    $ docker-compose start|stop|restart
-
-To remove the docker containers.
-
-    $ cd oracle-pg/
-    $ docker-compose down
+* Graph Visualization - https://localhost:7007/ui/ (User: graphuser, Password: Welcome1)
