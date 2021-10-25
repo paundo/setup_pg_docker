@@ -2,24 +2,24 @@
 
 # Setup Graph Server using Docker
 
-The docker image build files, sample datasets, and use case exmaples, for Oracle Property Graph.
+This repository contains the docker image build files and procedures for Oracle Graph.
 
 Architecture:
 
-![](https://user-images.githubusercontent.com/4862919/80330080-632e9a00-886e-11ea-822e-0a96e40dbbf9.jpg)
+![](https://user-images.githubusercontent.com/4862919/138631261-105c0795-3942-483c-9e01-f28417bf6d59.png)
 
-Oracle Database is required before setting up Graph Server because its authentication is based on the database users.
+Oracle Database is required for setting up Graph Server because the authentication mechanism of Oracle Database (based on database users) is used for Graph Server.
 
 - [Setup Database](#Setup_Database)
 - [Setup Graph Server](#Setup_Graph_Server)
 
-# Setup Database
+## Setup Database
 
-## Option 1. Use your existing database
+### Option 1. Use an existing database
 
 If you have an environment running Oracle Database (>= 12.2), the new Graph Server container can integrate with it. Please go to the next step to configure the database.
 
-## Option 2. Create a database container
+### Option 2. Create a database container
 
 Oracle Database [Express Edition (XE)](https://www.oracle.com/database/technologies/appdev/xe.html) is freely available, and we can get the scripts to build Docker image for XE 18c from the official GitHub repository.
 
@@ -65,7 +65,7 @@ To check the progress, see logs.
 
     $ docker logs -f database
 
-## Configure Database
+### Configure Database
 
 You need to apply the PL/SQL patch to the database.
 
@@ -88,7 +88,7 @@ Enable the graph feature. Please note `$HOME` of the host is mounted to `/host-h
     SQL> @/host-home/oracle-graph/oracle-graph-plsql/18c_and_below/catopg.sql
     SQL> exit
 
-## Create a User
+### Create a User
 
 Connect to the database container.
 
@@ -121,7 +121,7 @@ Exit and try connecting as the new user.
     SQL> exit
     $ docker exec -it database sqlplus graphuser/Welcome1@xepdb1
 
-## Create a Graph 
+### Create a Graph 
 
 You need SQLcl + PGQL plugin to run PGQL queries. (SQL*Plus does not support PGQL.)
 
@@ -171,16 +171,16 @@ Exit from SQLcl.
 
     PGQL> exit
 
-# Setup Graph Server
+## Setup Graph Server
 
-## Clone this Git Repository
+### Clone this Git Repository
 
     $ cd ~/oracle/
     $ git clone https://github.com/ryotayamanaka/setup_pg_docker.git
 
-## Download and Extract Packages for Graph Server and Client
+### Download and Extract Packages for Graph Server and Client
 
-Go to the following pages and download the packages.
+Go to the following sites and download the packages.
 
 * [Oracle Graph Server and Client 21.4](https://www.oracle.com/database/technologies/spatialandgraph/property-graph-features/graph-server-and-client/graph-server-and-client-downloads.html)
 * [Oracle JDK 11](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html) (No cost for personal use and development use)
@@ -188,17 +188,17 @@ Go to the following pages and download the packages.
 Put the following files under `packages/` directory.
  
 - oracle-graph-21.4.0.x86_64.rpm
-- jdk-11.0.10_linux-x64_bin.rpm
+- jdk-11.x.xx_linux-x64_bin.rpm
 
-## Start Container
+### Start Container
 
 Build the image.
 
 ```
 docker build . \
---tag graph-server:<version of Graph Server and Client> \
---build-arg VERSION_GSC=<version of Graph Server and Client> \
---build-arg VERSION_JDK=<version of JDK>
+--tag graph-server:21.4.0 \
+--build-arg VERSION_GSC=21.4.0 \
+--build-arg VERSION_JDK=<version_of_JDK>
 ```
 
 Example:
@@ -214,8 +214,8 @@ Start a container.
 
 ```
 docker run \
---name <container name> \
---publish <host port>:7007 \
+--name <container_name> \
+--publish <host_port>:7007 \
 --volume $PWD/pgx.conf:/etc/oracle/graph/pgx.conf \
 graph-server:21.4.0
 ```
@@ -230,11 +230,13 @@ docker run \
 graph-server:21.4.0
 ```
 
-## Connect to Graph Server
+### Connect to Graph Server
 
 ```
 docker exec -it graph-server /bin/bash
 ```
+
+### Login to Graph Visualization
 
 Access Graph Visualization using web browser.
 
